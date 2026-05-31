@@ -353,12 +353,13 @@ class ScrapePipeline:
     async def scrape_backfill(self, year: int | None, all_time: bool, source: str) -> dict[str, Any]:
         tasks = {}
         if source in ("all", "liquipedia"):
+            lp_base = str(self.settings.liquipedia_base_url).rstrip("/")
             seeds = [
-                FetchJob(url="https://liquipedia.net/dota2/Tier_1_Tournaments", source=Source.LIQUIPEDIA, kind=PageKind.LIQUIPEDIA_PORTAL),
-                FetchJob(url="https://liquipedia.net/dota2/Tier_2_Tournaments", source=Source.LIQUIPEDIA, kind=PageKind.LIQUIPEDIA_PORTAL),
-                FetchJob(url="https://liquipedia.net/dota2/Tier_3_Tournaments", source=Source.LIQUIPEDIA, kind=PageKind.LIQUIPEDIA_PORTAL),
+                FetchJob(url=f"{lp_base}/dota2/Tier_1_Tournaments", source=Source.LIQUIPEDIA, kind=PageKind.LIQUIPEDIA_PORTAL),
+                FetchJob(url=f"{lp_base}/dota2/Tier_2_Tournaments", source=Source.LIQUIPEDIA, kind=PageKind.LIQUIPEDIA_PORTAL),
+                FetchJob(url=f"{lp_base}/dota2/Tier_3_Tournaments", source=Source.LIQUIPEDIA, kind=PageKind.LIQUIPEDIA_PORTAL),
             ]
-            parser = LiquipediaParser(str(self.settings.liquipedia_base_url))
+            parser = LiquipediaParser(lp_base)
             fetcher_cm = LiquipediaFetcher(
                 user_agent=self.settings.user_agent,
                 timeout_seconds=self.settings.request_timeout_seconds,
@@ -367,8 +368,9 @@ class ScrapePipeline:
             tasks["liquipedia"] = self._run_with_cm(fetcher_cm, Source.LIQUIPEDIA, seeds, parser, self.settings.liquipedia_concurrency)
 
         if source in ("all", "dotabuff"):
-            seeds = [FetchJob(url="https://www.dotabuff.com/esports/leagues", source=Source.DOTABUFF, kind=PageKind.DOTABUFF_ESPORTS)]
-            parser = DotabuffParser(str(self.settings.dotabuff_base_url))
+            db_base = str(self.settings.dotabuff_base_url).rstrip("/")
+            seeds = [FetchJob(url=f"{db_base}/esports/leagues", source=Source.DOTABUFF, kind=PageKind.DOTABUFF_ESPORTS)]
+            parser = DotabuffParser(db_base)
             fetcher_cm = DotabuffFetcher(
                 fingerprint_seed=self.settings.browser_fingerprint_seed,
                 delay_seconds=self.settings.dotabuff_delay_seconds,
