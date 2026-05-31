@@ -329,14 +329,6 @@ class DltvParser:
         return int(match.group(1))
 
     @staticmethod
-    def _team_name_from_ranking_text(text: str) -> str | None:
-        cleaned = re.sub(r"\b\d{1,2}\b", " ", text)
-        cleaned = re.sub(r"[+-]\d+", " ", cleaned)
-        cleaned = re.sub(r"\d[\d,]*\s*pts\.?", " ", cleaned, flags=re.I)
-        name = clean_text(cleaned)
-        return name
-
-    @staticmethod
     def _teams_from_match_text(text: str) -> tuple[str | None, str | None]:
         score = SCORE_RE.search(text)
         if not score:

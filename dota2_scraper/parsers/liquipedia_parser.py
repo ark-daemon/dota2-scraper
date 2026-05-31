@@ -18,9 +18,6 @@ from dota2_scraper.utils import (
     stable_id,
 )
 
-REGIONS = {"WEU", "EEU", "NA", "SA", "CN", "SEA", "MENA"}
-
-
 class LiquipediaParser:
     """Defensive Liquipedia parser for tournaments, schedules, rosters, transfers, and earnings."""
 

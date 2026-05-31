@@ -439,6 +439,7 @@ class ScrapePipeline:
                 await fetch_queue.put(job)
 
         progress = tqdm(total=self.settings.max_pages_per_run, desc=f"scrape {source.value}", unit="page")
+        progress_lock = asyncio.Lock()
 
         async def fetch_worker(worker_id: int) -> None:
             while True:
@@ -455,7 +456,8 @@ class ScrapePipeline:
                         logger.warning("{} fetch failed for {}: {}", source.value, job.url, exc)
                         await state.mark_fetched()
                         await state.mark_completed()
-                        progress.update(1)
+                        async with progress_lock:
+                            progress.update(1)
                     finally:
                         await state.exit_fetch()
                 finally:
@@ -478,11 +480,13 @@ class ScrapePipeline:
                             if await state.mark_scheduled(discovered.url):
                                 await fetch_queue.put(discovered)
                         await state.mark_completed()
-                        progress.update(1)
+                        async with progress_lock:
+                            progress.update(1)
                     except Exception as exc:
                         logger.exception("{} parse/store failed: {}", source.value, exc)
                         await state.mark_completed()
-                        progress.update(1)
+                        async with progress_lock:
+                            progress.update(1)
                     finally:
                         await state.exit_parse()
                 finally:

@@ -91,16 +91,6 @@ def absolute_url(base_url: str, href: str | None) -> str | None:
     return urljoin(base_url, href)
 
 
-def same_domain(url: str, allowed_domains: Iterable[str]) -> bool:
-    host = urlparse(url).netloc.lower()
-    return any(host == domain or host.endswith(f".{domain}") for domain in allowed_domains)
-
-
-def first_present(*values: Any) -> Any:
-    for value in values:
-        if value not in (None, "", [], {}):
-            return value
-    return None
 
 
 def side_from_text(value: Any) -> str | None:

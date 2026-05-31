@@ -254,17 +254,13 @@ class Database:
                 ranking_rows = [dict(row) for row in rows_by_table.get(table, [])]
                 if not ranking_rows:
                     continue
-                count = 0
+                values: list[tuple[Any, ...]] = []
                 for row in ranking_rows:
                     team_name = row.get("team_name")
                     team_id = row.get("team_id")
                     if team_id is None and team_name:
                         team_id = self._resolve_name_id(team_name_map, None, team_name)
-                    await db.execute(
-                        f"""
-                        INSERT INTO {table}(team_id, team_name, ept_points, rank_position, rank_delta, fetched_at)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                        """,
+                    values.append(
                         (
                             team_id,
                             row.get("team_name"),
@@ -272,10 +268,16 @@ class Database:
                             row.get("rank_position"),
                             row.get("rank_delta"),
                             row.get("fetched_at"),
-                        ),
+                        )
                     )
-                    count += 1
-                inserted[table] = count
+                await db.executemany(
+                    f"""
+                    INSERT INTO {table}(team_id, team_name, ept_points, rank_position, rank_delta, fetched_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    values,
+                )
+                inserted[table] = len(values)
 
             transfer_rows = [dict(row) for row in rows_by_table.get("transfers", [])]
             if transfer_rows:

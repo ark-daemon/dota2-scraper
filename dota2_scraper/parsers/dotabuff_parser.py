@@ -23,6 +23,18 @@ from dota2_scraper.utils import (
 MATCH_RE = re.compile(r"/matches/(\d+)")
 TEAM_RE = re.compile(r"/esports/teams/(\d+)")
 HERO_RE = re.compile(r"/heroes/([a-z0-9-]+)")
+SCORE_RE = re.compile(r"\b\d+\s*-\s*\d+\b")
+BEST_OF_RE = re.compile(r"\bBo\s?([1253])\b|Best of\s+(\d)", re.I)
+SERIES_SCORE_RE = re.compile(r"\b(\d+)\s*[-:]\s*(\d+)\b")
+PATCH_RE = re.compile(r"\b7\.\d{2}[a-z]?\b", re.I)
+PICKBAN_HERO_RE = re.compile(r"(?:Pick|Ban)\s+([A-Z][A-Za-z' -]{2,})")
+PICKBAN_ALT_RE = re.compile(r"(.+?)\s+(?:picked|banned|pick|ban)\b", re.I)
+RADIANT_VICTORY_RE = re.compile(r"Radiant\s+Victory", re.I)
+DIRE_VICTORY_RE = re.compile(r"Dire\s+Victory", re.I)
+GAME_NUMBER_RE = re.compile(r"Game\s*(\d+)", re.I)
+TIME_RE = re.compile(r"^\d{1,2}:\d{2}")
+MEGA_CREEPS_RE = re.compile(r"(Radiant|Dire).{0,30}mega creeps", re.I)
+FIRST_BLOOD_RE = re.compile(r"first blood.{0,80}?(\d{1,2}:\d{2})", re.I)
 
 
 class DotabuffParser:
@@ -102,7 +114,7 @@ class DotabuffParser:
                     "tournament_name": self._nearest_text(row, ["a[href*='/esports/leagues/']", ".event", ".league", "[class*=event]"]),
                     "region": detect_region(text),
                     "series_format": self._series_format(text),
-                    "status": "completed" if re.search(r"\b\d+\s*-\s*\d+\b", text) else None,
+                    "status": "completed" if SCORE_RE.search(text) else None,
                     "raw_json": json_dumps({"text": text, "url": match_link}),
                 },
             )
@@ -474,7 +486,7 @@ class DotabuffParser:
 
     @staticmethod
     def _series_format(text: str) -> str | None:
-        match = re.search(r"\bBo\s?([1253])\b|Best of\s+(\d)", text, re.I)
+        match = BEST_OF_RE.search(text)
         if not match:
             return None
         number = match.group(1) or match.group(2)
@@ -482,14 +494,14 @@ class DotabuffParser:
 
     @staticmethod
     def _score(text: str) -> tuple[int | None, int | None]:
-        match = re.search(r"\b(\d+)\s*[-:]\s*(\d+)\b", text)
+        match = SERIES_SCORE_RE.search(text)
         if not match:
             return None, None
         return int(match.group(1)), int(match.group(2))
 
     @staticmethod
     def _patch(text: str) -> str | None:
-        match = re.search(r"\b7\.\d{2}[a-z]?\b", text, re.I)
+        match = PATCH_RE.search(text)
         return match.group(0) if match else None
 
     @staticmethod
@@ -558,7 +570,7 @@ class DotabuffParser:
 
     @staticmethod
     def _hero_from_text(text: str) -> str | None:
-        match = re.search(r"(?:Pick|Ban)\s+([A-Z][A-Za-z' -]{2,})", text)
+        match = PICKBAN_HERO_RE.search(text)
         return clean_text(match.group(1)) if match else None
 
     @staticmethod
@@ -570,7 +582,7 @@ class DotabuffParser:
 
     @staticmethod
     def _team_from_draft_text(text: str) -> str | None:
-        match = re.search(r"(.+?)\s+(?:picked|banned|pick|ban)\b", text, re.I)
+        match = PICKBAN_ALT_RE.search(text)
         return clean_text(match.group(1)) if match else None
 
     @staticmethod
@@ -590,9 +602,9 @@ class DotabuffParser:
             if "dire" in klass or "dire victory" in node_text:
                 return "dire"
         # Fallback: plain text scan
-        if re.search(r"Radiant\s+Victory", text, re.I):
+        if RADIANT_VICTORY_RE.search(text):
             return "radiant"
-        if re.search(r"Dire\s+Victory", text, re.I):
+        if DIRE_VICTORY_RE.search(text):
             return "dire"
         return None
 
@@ -602,7 +614,7 @@ class DotabuffParser:
         # "Game" is preceded by the score digit "0", so \b fails. Use plain search.
         # The digits after "Game" may be "149" where "1" = game number, "49" = minutes.
         def _extract(raw_text: str) -> int | None:
-            m = re.search(r"Game\s*(\d+)", raw_text, re.I)
+            m = GAME_NUMBER_RE.search(raw_text)
             if not m:
                 return None
             raw = m.group(1)
@@ -610,7 +622,7 @@ class DotabuffParser:
             # pattern (e.g. "49:43"), the first digit is the game number and the
             # rest is minutes. Otherwise trust the full number as the game number.
             after = raw_text[m.end() : m.end() + 6]
-            if len(raw) >= 2 and re.search(r"^\d{1,2}:\d{2}", after):
+            if len(raw) >= 2 and TIME_RE.search(after):
                 return int(raw[0])
             return int(raw)
 
@@ -624,7 +636,7 @@ class DotabuffParser:
 
     @staticmethod
     def _mega_creeps(text: str) -> str | None:
-        match = re.search(r"(Radiant|Dire).{0,30}mega creeps", text, re.I)
+        match = MEGA_CREEPS_RE.search(text)
         return match.group(1).title() if match else None
 
     @staticmethod
@@ -679,7 +691,7 @@ class DotabuffParser:
 
     @staticmethod
     def _first_blood(text: str) -> dict[str, Any] | None:
-        match = re.search(r"first blood.{0,80}?(\d{1,2}:\d{2})", text, re.I)
+        match = FIRST_BLOOD_RE.search(text)
         if not match:
             return None
         return {"time": match.group(1)}

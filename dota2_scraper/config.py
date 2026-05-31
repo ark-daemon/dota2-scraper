@@ -29,7 +29,6 @@ class Settings(BaseSettings):
 
     dotabuff_concurrency: int = Field(default=2, ge=1, le=5)
     liquipedia_concurrency: int = Field(default=4, ge=1, le=8)
-    opendota_concurrency: int = Field(default=2, ge=1, le=8)
     dltv_concurrency: int = Field(default=1, ge=1, le=3)
     request_timeout_seconds: float = Field(default=30.0, gt=0)
     dotabuff_delay_seconds: float = Field(default=2.5, ge=0)
