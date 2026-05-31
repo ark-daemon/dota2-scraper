@@ -1,0 +1,89 @@
+﻿# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+# Keep the example template
+!.env.example
+
+# IDEs / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and databases
+*.log
+*.zip
+logs/
+*.db
+*.db-*
+
+# Local data artifacts
+exports/
+*.parquet
+*.html
+*.json
+opendota_heroes_cache.json
+
+# Browser / Playwright artifacts
+.cloakbrowser/
+.playwright-mcp/
+
+# Test caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# Scratch / diagnostic scripts
+# (Remove these from the repo before publishing; keep only core package)
+test*.py
+probe*.py
+dump_*.py
+inspect_*.py
+verify_*.py
+diagnose*.py
+fetch_*.py
+*.md
+# Keep the main README
+!README.md
