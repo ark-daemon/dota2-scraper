@@ -1,6 +1,10 @@
-﻿# Data Scrapers — Structural Data Extraction Architecture
+# Dota 2 Esports Data Scraper
 
-A modular, async-first data-engineering toolkit for high-fidelity DOM parsing, resilient structural scraping, and normalized downstream pipelines. Built for scenarios where target layouts shift, anti-bot scripts run, and data fidelity must remain constant across large-scale ingestion jobs.
+An async Python 3.11+ pipeline for extracting Dota 2 esports data from multiple sources — Dotabuff, Liquipedia, OpenDota, and DLTV. Covers match results, draft picks, player stats, team rosters, tournament placements, earnings, and world rankings. Built for performance analytics, betting research, and deep historical backfill of competitive Dota 2 data.
+
+Scraped data lands in a normalized SQLite warehouse with full foreign-key relationships, exportable to Parquet, CSV, or JSON for direct use in Pandas, BI tools, or cloud data warehouses.
+
+---
 
 ## Architecture Highlights
 
