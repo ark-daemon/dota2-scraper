@@ -17,7 +17,7 @@ from dota2_scraper.storage.database import Database, export_tables
 console = Console()
 app = typer.Typer(
     name="dota2-scraper",
-    help="Async structural data extraction pipeline for esports analytics.",
+    help="Async Dota 2 esports scraper (Dotabuff, Liquipedia, OpenDota, DLTV).",
     no_args_is_help=True,
     rich_markup_mode="rich",
     pretty_exceptions_show_locals=False,

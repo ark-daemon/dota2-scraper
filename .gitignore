@@ -75,15 +75,10 @@ opendota_heroes_cache.json
 .ruff_cache/
 .tox/
 
-# Scratch / diagnostic scripts
-# (Remove these from the repo before publishing; keep only core package)
-test*.py
-probe*.py
-dump_*.py
-inspect_*.py
-verify_*.py
-diagnose*.py
-fetch_*.py
-*.md
-# Keep the main README
-!README.md
+# Scratch / diagnostic scripts at repo root only
+/probe*.py
+/dump_*.py
+/inspect_*.py
+/verify_*.py
+/diagnose*.py
+/fetch_*.py

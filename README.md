@@ -1,120 +1,76 @@
 # Dota 2 Esports Data Scraper
 
-An async Python 3.11+ pipeline for extracting Dota 2 esports data from multiple sources — Dotabuff, Liquipedia, OpenDota, and DLTV. Covers match results, draft picks, player stats, team rosters, tournament placements, earnings, and world rankings. Built for performance analytics, betting research, and deep historical backfill of competitive Dota 2 data.
+Async Python 3.11+ scraper for **Dota 2 esports data** from:
 
-Scraped data lands in a normalized SQLite warehouse with full foreign-key relationships, exportable to Parquet, CSV, or JSON for direct use in Pandas, BI tools, or cloud data warehouses.
+- [Dotabuff](https://www.dotabuff.com) (browser-rendered esports pages)
+- [Liquipedia](https://liquipedia.net/dota2) (static HTML)
+- [OpenDota API](https://docs.opendota.com) (match deep stats)
+- [DLTV](https://dltv.org) (live/ranking feeds)
+
+Covers matches, drafts, player stats, rosters, tournaments, earnings, and rankings. Data lands in SQLite and exports to Parquet/CSV.
 
 ---
 
-## Architecture Highlights
+## Install
 
-- **Automated DOM Parsing & Structural Data Extraction**  
-  Deeply-nested HTML is decomposed into strongly-typed relational rows via defensive, CSS-selectored parsers. Each parser is built to survive missing nodes, renamed classes, and responsive-template duplication without crashing the pipeline.
-
-- **Dynamic Error Handling for Anti-Bot & Layout Shifts**  
-  Every fetcher implements exponential-backoff retry with jitter, adaptive rate-limiting, and graceful degradation. A stealth-capable headless browser abstraction handles JavaScript-heavy targets, while static endpoints are served through high-performance `httpx` with HTTP/2 and connection reuse.
-
-- **Efficient JSON / CSV / Parquet Data Pipeline Output**  
-  All extracted data lands in a normalized SQLite schema with full foreign-key relationships. A built-in export layer transforms every table into sorted Parquet (or CSV-compatible) files for direct ingestion into BI tools, Pandas, or cloud data warehouses.
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Runtime | Python 3.11+ (async-first) |
-| Settings | Pydantic Settings (env-driven, `DOTA2_` prefix) |
-| HTTP | `httpx` with HTTP/2, custom headers, and backoff |
-| Browser | Stealth headless abstraction (Chromium-based) |
-| HTML Parsing | `selectolax` + `BeautifulSoup` (defensive dual-path) |
-| Database | SQLite + `aiosqlite` (WAL mode, async-safe) |
-| Export | `pandas` → `pyarrow` Parquet |
-| CLI | `typer` + `rich` |
-
-## Installation
-
-```powershell
+```bash
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e .
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+pip install -e ".[dev]"
 ```
 
-> The stealth browser engine auto-downloads its Chromium binary on first launch; no manual browser installation is required.
+CloakBrowser downloads its Chromium binary on first launch for JS-heavy sources.
 
-## Configuration
-
-Copy the example environment file and adjust to your targets:
-
-```powershell
-copy .env.example .env
+```bash
+cp .env.example .env
+# Set DOTA2_USER_AGENT to a real contact email before heavy runs.
 ```
 
-All settings use the `DOTA2_` prefix. Key variables:
+## Usage
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `DOTA2_DB_PATH` | `dota2.db` | Local SQLite database |
-| `DOTA2_EXPORT_DIR` | `exports` | Parquet output folder |
-| `DOTA2_LOG_DIR` | `logs` | Application logs |
-| `DOTA2_MAX_PAGES_PER_RUN` | `100` | Safety limit per scraping run |
-| `DOTA2_BROWSER_FINGERPRINT_SEED` | `42069` | Fixed entropy seed for deterministic browser fingerprinting |
-| `DOTA2_USER_AGENT` | `Dota2EsportsResearchBot/0.1 ...` | Request identity string |
-
-## CLI Usage
-
-Run individual extraction endpoints or the full pipeline:
-
-```powershell
-# DOM-driven extraction (JavaScript-heavy targets)
-dota2-scraper scrape dotabuff
-
-# Static HTML structural extraction
+```bash
 dota2-scraper scrape liquipedia
-
-# REST API deep-stat ingestion
 dota2-scraper scrape opendota
-
-# Live feed & ranking snapshots
+dota2-scraper scrape dotabuff
 dota2-scraper scrape dltv
-
-# Run all configured sources concurrently
 dota2-scraper scrape all
-
-# Historical backfill (bounded by year or all-time)
-dota2-scraper scrape backfill --year 2023
-dota2-scraper scrape backfill --all-time
-
-# Export SQLite tables to sorted Parquet files
 dota2-scraper export
-
-# Check database row counts
 dota2-scraper status
 ```
 
-Override limits on the fly:
+Limit pages per run:
 
-```powershell
-dota2-scraper scrape dotabuff --max-pages 500
-dota2-scraper scrape all --max-pages 1000
+```bash
+dota2-scraper scrape liquipedia --max-pages 50
 ```
 
-## Database Schema
+## Configuration
 
-The normalized schema covers:
+Settings use the `DOTA2_` prefix (see `.env.example`).
 
-- **teams**, **players**, **rosters**, **staff**, **transfers**
-- **tournaments**, **matches**, **games**
-- **drafts**, **draft_picks**, **player_game_stats**, **game_timelines**
-- **earnings**, **rankings**, **objectives**
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `DOTA2_DB_PATH` | `dota2.db` | SQLite path |
+| `DOTA2_MAX_PAGES_PER_RUN` | `100` | Safety cap |
+| `DOTA2_USER_AGENT` | research bot string | Identify yourself |
 
-Every table stores a `raw_json` audit column so upstream parser improvements can be replayed without re-fetching source HTML.
+## Testing
 
-## Design Principles
+```bash
+pytest -q
+```
 
-1. **Defensive Parsing** — Missing fields become `NULL`; malformed rows are logged and skipped.
-2. **Resumability** — The pipeline checks existing primary keys before insertion, making long backfills safely interruptible.
-3. **Rate Discipline** — Each source has independent concurrency and delay knobs to avoid overloading target infrastructure.
-4. **Zero Hardcoded Secrets** — URLs, fingerprints, and identity strings are injected exclusively through the environment (`.env`).
+## Responsible use
+
+- Prefer OpenDota/Liquipedia with polite delays.
+- Keep Dotabuff concurrency low (default 2).
+- Users must comply with each source's Terms of Service.
+- Not affiliated with Dotabuff, Liquipedia, OpenDota, or DLTV.
 
 ## License
 
-MIT — see `pyproject.toml` for full metadata.
+MIT © 2026 ark-daemon — see [LICENSE](LICENSE).

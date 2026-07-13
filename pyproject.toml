@@ -5,10 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dota2-scraper"
 version = "0.1.0"
-description = "Async structural data extraction pipeline for esports analytics"
+description = "Async Dota 2 esports scraper for Dotabuff, Liquipedia, OpenDota, and DLTV"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.11"
+authors = [{ name = "ark-daemon" }]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -33,10 +34,29 @@ dependencies = [
     "tenacity>=8.2.3",
     "tqdm>=4.66.0",
     "typer>=0.12.0",
+    "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
 ]
 
 [project.scripts]
 dota2-scraper = "dota2_scraper.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/ark-daemon/dota2-scraper"
+Repository = "https://github.com/ark-daemon/dota2-scraper"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dota2_scraper*"]
+
+[tool.setuptools.package-data]
+dota2_scraper = ["schemas/*.sql"]
 
 [tool.ruff]
 line-length = 100
@@ -44,6 +64,4 @@ target-version = "py311"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-
-[tool.setuptools]
-packages = ["dota2_scraper"]
+testpaths = ["tests"]
