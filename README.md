@@ -4,9 +4,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](CHANGELOG.md)
 
-Async multi-source pipeline for **Dota 2 esports data** — Liquipedia + OpenDota API + DLTV over httpx, Dotabuff via CloakBrowser — staged in SQLite and exported to Parquet.
+Async multi-source pipeline for **Dota 2 esports data** - Liquipedia + OpenDota API + DLTV over httpx, Dotabuff via CloakBrowser - staged in SQLite and exported to Parquet.
 
-**Fleet:** [vlr-scraper](https://github.com/ark-daemon/vlr-scraper) · [hltv-scraper](https://github.com/ark-daemon/hltv-scraper) · [rocket-league-scraper](https://github.com/ark-daemon/rocket-league-scraper) · [lol-esports-scraper](https://github.com/ark-daemon/lol-esports-scraper)
+**Fleet:** [vlr-scraper](https://github.com/ark-daemon/vlr-scraper) | [hltv-scraper](https://github.com/ark-daemon/hltv-scraper) | [rocket-league-scraper](https://github.com/ark-daemon/rocket-league-scraper) | [lol-esports-scraper](https://github.com/ark-daemon/lol-esports-scraper)
 
 ---
 
@@ -14,40 +14,40 @@ Async multi-source pipeline for **Dota 2 esports data** — Liquipedia + OpenDot
 
 Ingests tournament structure, teams, players, series results, per-game drafts/stats, rankings, transfers, and earnings-shaped records into one schema (`source` + `source_id` keys). Prefer **OpenDota** and **Liquipedia** for stable bulk data; use Dotabuff/DLTV when you need those surfaces.
 
-Maturity: **beta (`0.1.0`)**. Multi-source identity is **not** fully reconciled into a single canonical entity graph — rows coexist with source tags. Not affiliated with Dotabuff, Liquipedia, OpenDota, or DLTV.
+Maturity: **beta (`0.1.0`)**. Multi-source identity is **not** fully reconciled into a single canonical entity graph - rows coexist with source tags. Not affiliated with Dotabuff, Liquipedia, OpenDota, or DLTV.
 
 ---
 
 ## Architecture
 
 ```
-                    seeds (per source)
-                           │
-           â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-           â–¼               â–¼                â–¼
-    DotabuffFetcher  LiquipediaFetcher  OpenDotaFetcher / DltvFetcher
-    CloakBrowser     httpx (+ delay)    httpx (+ rate limit / tenacity)
-    fingerprint      BeautifulSoup /    JSON → opendota_parser
-    seed             selectolax parsers
-           │               │                │
-           â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                           │
-                           â–¼
-                  ScrapePipeline (async queues,
-                  max_pages_per_run cap, URL de-dupe)
-                           │
-                           â–¼
-                  storage.Database → SQLite WAL
-                           │
-                           â–¼
-                  export → Parquet (pandas + pyarrow)
+                         seeds (per source)
+                                |
+          +---------------------+---------------------+
+          |                     |                     |
+          v                     v                     v
+   DotabuffFetcher       LiquipediaFetcher    OpenDotaFetcher / DltvFetcher
+   CloakBrowser          httpx (+ delay)      httpx (+ rate limit / tenacity)
+   fingerprint seed      BS4 / selectolax     JSON -> opendota_parser
+          |                     |                     |
+          +---------------------+---------------------+
+                                |
+                                v
+                   ScrapePipeline (async queues,
+                   max_pages_per_run cap, URL de-dupe)
+                                |
+                                v
+                   storage.Database -> SQLite WAL
+                                |
+                                v
+                   export -> Parquet (pandas + pyarrow)
 ```
 
 **Resilience vocabulary (precise):**
 
-- **Per-fetcher delays** (`DOTA2_*_DELAY_SECONDS`) — spacing, not a token bucket.
+- **Per-fetcher delays** (`DOTA2_*_DELAY_SECONDS`) - spacing, not a token bucket.
 - **tenacity** retries with exponential jitter on network/5xx/429 for HTTP fetchers.
-- **No circuit breaker** (that term is reserved for vlr-scraper’s global failure trip).
+- **No circuit breaker** (that term is reserved for vlr-scraper's global failure trip).
 - **CloakBrowser** only on the Dotabuff path (`launch_async` + `--fingerprint=`). Error text mentions `patchright install-deps chromium` if the stealth stack is incomplete.
 
 CLI `scrape all` currently runs **Dotabuff + Liquipedia** concurrently (`pipeline.scrape_all`); OpenDota and DLTV are separate commands.
@@ -104,9 +104,9 @@ dota2-scraper scrape backfill --year 2024
 | `DOTA2_OPENDOTA_BASE_URL` | `https://api.opendota.com/api` | API root |
 | `DOTA2_DLTV_BASE_URL` | `https://dltv.org` | Origin |
 | `DOTA2_BROWSER_FINGERPRINT_SEED` | `42069` | CloakBrowser fingerprint arg |
-| `DOTA2_DOTABUFF_CONCURRENCY` | `2` (1“5) | Parallel Dotabuff workers |
-| `DOTA2_LIQUIPEDIA_CONCURRENCY` | `4` (1“8) | Parallel Liquipedia workers |
-| `DOTA2_DLTV_CONCURRENCY` | `1` (1“3) | Parallel DLTV workers |
+| `DOTA2_DOTABUFF_CONCURRENCY` | `2` (1-5) | Parallel Dotabuff workers |
+| `DOTA2_LIQUIPEDIA_CONCURRENCY` | `4` (1-8) | Parallel Liquipedia workers |
+| `DOTA2_DLTV_CONCURRENCY` | `1` (1-3) | Parallel DLTV workers |
 | `DOTA2_REQUEST_TIMEOUT_SECONDS` | `30` | HTTP timeout |
 | `DOTA2_DOTABUFF_DELAY_SECONDS` | `2.5` | Delay between Dotabuff pages |
 | `DOTA2_LIQUIPEDIA_DELAY_SECONDS` | `1.5` | Delay between Liquipedia pages |
@@ -116,7 +116,7 @@ dota2-scraper scrape backfill --year 2024
 
 Default seeds (overridable only by code/CLI URL flags, not env lists): Dotabuff `/esports`; Liquipedia tournament/team/upcoming portals.
 
-> Note: `.env.example` may list `DOTA2_OPENDOTA_CONCURRENCY`; that field is **not** defined on `Settings` and is ignored unless you add it to the model.
+> Note: `.env.example` must not invent knobs that `Settings` ignores.
 
 ---
 
@@ -132,7 +132,7 @@ Schema: `dota2_scraper/schemas/schema.sql`.
 
 Most fact tables carry `source`, `source_id`, and often `raw_json` for replay/debug.
 
-**Illustrative export shape** (Parquet columns match SQLite; sample after Liquipedia-style ingest):
+**Illustrative export shape** (Parquet columns match SQLite):
 
 ```text
 tournaments.parquet
@@ -153,9 +153,9 @@ CLI `export` writes **Parquet only** (not CSV/JSON).
 - **Cross-source IDs are not merged.** Same team may appear under multiple `source` values.
 - **Dotabuff depends on CloakBrowser** and is the most fragile/expensive path.
 - **OpenDota public rate limits** apply; no API key plumbing in Settings today.
-- **No circuit breaker** — only delays + tenacity retries.
+- **No circuit breaker** - only delays + tenacity retries.
 - **Parser coverage varies** by page type/season; missing fields become NULL.
-- **Tests** cover packaging smoke, utils, and a Liquipedia HTML fixture — not live multi-source integration.
+- **Tests** cover packaging smoke, utils, and a Liquipedia HTML fixture - not live multi-source integration.
 
 ---
 
@@ -163,7 +163,7 @@ CLI `export` writes **Parquet only** (not CSV/JSON).
 
 | Layer | Actually used |
 |-------|----------------|
-| Runtime | Python â‰¥3.11, asyncio |
+| Runtime | Python >=3.11, asyncio |
 | CLI | typer, rich |
 | Config | pydantic + pydantic-settings |
 | HTTP | httpx (HTTP/2 extra enabled in deps) |
@@ -171,15 +171,15 @@ CLI `export` writes **Parquet only** (not CSV/JSON).
 | HTML | beautifulsoup4 + selectolax |
 | Retry | tenacity |
 | Storage | aiosqlite |
-| Export | pandas + pyarrow → Parquet |
-| Logging | loguru; progress via tqdm |
+| Export | pandas + pyarrow -> Parquet |
+| Logging | loguru; progress via tqdm / rich CLI chrome |
 | Quality | pytest (dev) |
 
 ---
 
 ## License
 
-MIT © ark-daemon — see [LICENSE](LICENSE).
+MIT (c) ark-daemon - see [LICENSE](LICENSE).
 
 See also [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [CHANGELOG.md](CHANGELOG.md).
 
