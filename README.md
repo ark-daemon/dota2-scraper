@@ -73,4 +73,7 @@ pytest -q
 
 ## License
 
-MIT © 2026 ark-daemon — see [LICENSE](LICENSE).
+MIT Â© 2026 ark-daemon â€” see [LICENSE](LICENSE).
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md). Changes: [CHANGELOG.md](CHANGELOG.md).
